@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi" xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
+    <Product Id="CAAD1749-4F20-4572-A771-0312B9D21678" Name="IIS StripHeaders module" Language="1033" Version="1.0.0.0" Manufacturer="Dionach Ltd" UpgradeCode="FDFC59AA-E51F-4394-B9AA-5DA92C84A2ED">
+        <Package Id="461D0767-054B-4EFA-BB53-6B8E12C556B2" Description="IIS StripHeaders module installer" InstallerVersion="200" Languages="1033" SummaryCodepage="1252" Compressed="yes" InstallScope="perMachine" />
+        <!-- Prevent downgrades --> 
+        <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+        <!-- Make sure installer is built as a single msi -->
+        <MediaTemplate EmbedCab="yes" />
+        <!-- Prevent restart manager or the files in use dialog being displayed on uninstall -->
+        <Property Id="MSIRESTARTMANAGERCONTROL" Value="Disable"/>
+        <!-- Ensure OS is high enough to support IIS 7.0 and above -->
+        <Condition Message="This module is only supported on Windows Vista, Windows Server 2008, or higher.">
+            <![CDATA[Installed OR (VersionNT >= 600)]]>
+        </Condition>
+        <!-- Ensure operating system is 64bit -->
+        <Condition Message="You are attempting to run the 64-bit installer on a 32-bit version of Windows.">
+            <![CDATA[Msix64]]>
+        </Condition>
+        <!-- Ensure IIS is installed -->
+        <Property Id="IISVERSION">
+            <DirectorySearch Id="IISVersion" Path="[SystemFolder]\inetsrv">
+                <FileSearch Name="w3wp.exe" MinVersion="7.0"/>
+            </DirectorySearch>
+        </Property>
+        <Condition Message="This module is only supported on systems running IIS 7.0 or above.">
+            <![CDATA[Installed OR IISVERSION]]>
+        </Condition>
+        <!-- Ensure appcmd is available to install and remove modules -->
+        <Property Id="APPCMDVERSION">
+            <DirectorySearch Id="APPCMDVersion" Path="[SystemFolder]\inetsrv">
+                <FileSearch Name="appcmd.exe" MinVersion="7.0"/>
+            </DirectorySearch>
+        </Property>
+        <Condition Message="This module requires the IIS appcmd.exe command line tool in order to enable the module.">
+            <![CDATA[Installed OR APPCMDVERSION]]>
+        </Condition>
+        <!-- Define the directory structure -->
+        <Directory Id="TARGETDIR" Name="SourceDir">
+            <Directory Id="System64Folder">
+                <Directory Id="INETSRVDIR" Name="inetsrv">
+                    <Directory Id="CONFIGDIR" Name="config">
+                        <Directory Id="SCHEMADIR" Name="schema"/>
+                    </Directory>
+                </Directory>
+            </Directory>
+        </Directory>
+        <!-- Add files and registry values -->
+        <DirectoryRef Id="INETSRVDIR">
+            <!-- Add the stripheaders.dll module -->
+            <Component Id="stripheaders.dll" Guid="4BBF0D80-2CE8-4EC3-BDDD-93786BE2258C">
+                <File Source="$(var.NativeCodeModule.TargetPath)" KeyPath="yes" Checksum="yes"/>
+            </Component>
+            <!-- Add the registry key to disbale the Microsoft-HTTPAPI Server header -->
+            <Component Id="HTTPAPIHeaderRegistryEntry" Guid="18C15683-E20E-4C6E-B4BC-2770F68D54DE">
+                <RegistryKey Root="HKLM" Key="SYSTEM\CurrentControlSet\services\HTTP\Parameters">
+                    <RegistryValue Type="integer" Name="DisableServerHeader" Value="1" KeyPath="yes"/>
+                </RegistryKey>
+            </Component>
+        </DirectoryRef>
+        <DirectoryRef Id="SCHEMADIR">
+            <!-- Add the stripHeaders custom IIS schema for configuration -->
+            <Component Id="stripHeaders_schema.xml" Guid="3AA6B36D-4028-4F68-90CD-BF881235590D">
+                <File Source="stripHeaders_schema.xml" KeyPath="yes" Checksum="yes"/>
+            </Component>
+        </DirectoryRef>
+        <DirectoryRef Id="CONFIGDIR">
+            <!-- Add configuration to applicationHost.config -->
+            <Component Id="APPLICATIONHOSTXML" Guid="E08C1CC0-7657-4E13-A7B9-A4A906F43586">
+                <!-- A fake folder is required to allow the installer to build this component -->
+                <CreateFolder/>
+                <!-- Create the "section" element in the system.webserver node to register the custom stripHeaders schema -->
+                <util:XmlConfig Id="AddSectionElement" File="[CONFIGDIR]\applicationHost.config" Action="create" Node="element" ElementPath="configuration/configSections/sectionGroup[\[]@name='system.webServer'[\]]" Name="section" On="install" Sequence="1001" />
+                <!-- Add necessary attributes to the "section" element -->
+                <util:XmlConfig Id="AddSectionName" File="[CONFIGDIR]\applicationHost.config" ElementId="AddSectionElement" Name="name" Value="stripHeaders" Sequence="1002" />
+                <util:XmlConfig Id="AddSectionAppHostOnly" File="[CONFIGDIR]\applicationHost.config" ElementId="AddSectionElement" Name="allowDefinition" Value="AppHostOnly" Sequence="1003" />
+                <util:XmlConfig Id="AddSectionoverrideModeDefault" File="[CONFIGDIR]\applicationHost.config" ElementId="AddSectionElement" Name="overrideModeDefault" Value="Deny" Sequence="1004" />
+                <!-- Add default configuration to remove common headers -->
+                <util:XmlConfig Id="AddStripHeadersElement" File="[CONFIGDIR]\applicationHost.config" Action="create" Node="element" ElementPath="/configuration/system.webServer" Name="stripHeaders" On="install" Sequence="1006" />
+                <util:XmlConfig Id="AddServerHeaderElement" File="[CONFIGDIR]\applicationHost.config" Action="create" Node="element" ElementPath="/configuration/system.webServer/stripHeaders" Name="header" On="install" Sequence="1007" />
+                <util:XmlConfig Id="AddServerHeaderName" File="[CONFIGDIR]\applicationHost.config" ElementId="AddServerHeaderElement" Name="name" Value="Server" Sequence="1008" />
+                <util:XmlConfig Id="AddXPoweredByHeaderElement" File="[CONFIGDIR]\applicationHost.config" Action="create" Node="element" ElementPath="/configuration/system.webServer/stripHeaders" Name="header" On="install" Sequence="1009" />
+                <util:XmlConfig Id="AddXPoweredByHeaderName" File="[CONFIGDIR]\applicationHost.config" ElementId="AddXPoweredByHeaderElement" Name="name" Value="X-Powered-By" Sequence="1010" />
+                <util:XmlConfig Id="AddXAspnetVersionHeaderElement" File="[CONFIGDIR]\applicationHost.config" Action="create" Node="element" ElementPath="/configuration/system.webServer/stripHeaders" Name="header" On="install" Sequence="1009" />
+                <util:XmlConfig Id="AddXAspnetVersionHeaderName" File="[CONFIGDIR]\applicationHost.config" ElementId="AddXAspnetVersionHeaderElement" Name="name" Value="X-Aspnet-Version" Sequence="1010" />
+                <!-- Remove custom schema and any configured headers on uninstall -->
+                <util:XmlConfig Id="SchemaRemove" File="[CONFIGDIR]\applicationHost.config" Action="delete" Node="element" VerifyPath="section[\[]@name='stripHeaders'[\]]" ElementPath="configuration/configSections/sectionGroup[\[]@name='system.webServer'[\]]" On="uninstall" Sequence="1001" />
+                <util:XmlConfig Id="ConfigurationRemove" File="[CONFIGDIR]\applicationHost.config" Action="delete" Node="element" VerifyPath="stripHeaders" ElementPath="/configuration/system.webServer" On="uninstall" Sequence="1002" />
+            </Component>
+        </DirectoryRef>
+        <!-- install the files and registry values defined above -->
+        <Feature Id="MainInstall" Title="Main Install" Level="1">
+            <ComponentRef Id="stripheaders.dll" />
+            <ComponentRef Id="HTTPAPIHeaderRegistryEntry" />
+            <ComponentRef Id="stripHeaders_schema.xml" />
+            <ComponentRef Id="APPLICATIONHOSTXML" />
+        </Feature>
+        <!--Run custom actions to install and uninstall modules using appcmd -->
+        <InstallExecuteSequence>
+            <!-- If the package is installed, always uninstall module using appcmd to prevent IIS locking the dll. Run as soon as the install has validated -->
+            <Custom Action='QtExecUninstallModuleCMD' Before="QtExecUninstallModule">Installed</Custom>
+            <Custom Action="QtExecUninstallModule" Before="InstallValidate">Installed</Custom>
+            <!-- Always install the module using appcmd, as it will be uninstalled to prevent IIS locking the dll. Run after installation is complete -->
+            <Custom Action='QtExecInstallModuleCMD' Before="QtExecInstallModule">Installed AND NOT REMOVE OR NOT Installed</Custom>
+            <Custom Action="QtExecInstallModule" After="InstallFinalize" >Installed AND NOT REMOVE OR NOT Installed</Custom>
+        </InstallExecuteSequence>
+        <!-- Custom action command definitions. Not checking return values as this causes the package install/upgrade/uninstall to fail if an administrator has manually altered the StipHeaders module registration in IIS manager -->
+        <CustomAction Id="QtExecUninstallModuleCMD" Execute="immediate" Property="QtExec64CmdLine" Value="&quot;[WindowsFolder]system32\inetsrv\appcmd.exe&quot; uninstall module StripHeadersModule" />
+        <CustomAction Id="QtExecUninstallModule" BinaryKey="WixCA" DllEntry="CAQuietExec64" Execute="immediate" Return="ignore"/>
+        <CustomAction Id="QtExecInstallModuleCMD" Execute="immediate" Property="QtExec64CmdLine" Value="&quot;[WindowsFolder]system32\inetsrv\appcmd.exe&quot; install module /name:StripHeadersModule /image:%windir%\system32\inetsrv\stripheaders.dll /add:true /lock:true" />
+        <CustomAction Id="QtExecInstallModule" BinaryKey="WixCA" DllEntry="CAQuietExec64" Execute="immediate" Return="ignore"/>
+    </Product>
+</Wix>

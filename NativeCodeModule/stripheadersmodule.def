@@ -1,0 +1,4 @@
+LIBRARY StripHeadersModules
+
+EXPORTS
+	RegisterModule
