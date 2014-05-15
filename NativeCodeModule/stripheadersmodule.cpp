@@ -242,6 +242,22 @@ HRESULT __stdcall RegisterModule( DWORD dwServerVersion, IHttpModuleRegistration
 	UNREFERENCED_PARAMETER( dwServerVersion );
 	UNREFERENCED_PARAMETER( pGlobalInfo );
 
-	// Set the request notifications and exit.
-	return pModuleInfo->SetRequestNotifications( new StripHeadersModuleFactory, RQ_SEND_RESPONSE, 0 );
+	HRESULT hr;
+
+	// Set the request notifications
+	hr = pModuleInfo->SetRequestNotifications( new StripHeadersModuleFactory, RQ_SEND_RESPONSE, 0 );
+	if (FAILED(hr))
+    {
+        return hr;
+    }
+
+	// Set the request priority.
+	// Note: The priority levels are inverted for RQ_SEND_RESPONSE notifications.
+    hr = pModuleInfo->SetPriorityForRequestNotification( RQ_SEND_RESPONSE, PRIORITY_ALIAS_FIRST );
+	if (FAILED(hr))
+    {
+        return hr;
+    }
+
+	return S_OK;
 }
