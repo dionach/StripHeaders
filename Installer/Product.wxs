@@ -1,9 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi" xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
-    <Product Id="CAAD1749-4F20-4572-A771-0312B9D21678" Name="IIS StripHeaders module" Language="1033" Version="1.0.0.0" Manufacturer="Dionach Ltd" UpgradeCode="FDFC59AA-E51F-4394-B9AA-5DA92C84A2ED">
-        <Package Id="461D0767-054B-4EFA-BB53-6B8E12C556B2" Description="IIS StripHeaders module installer" InstallerVersion="200" Languages="1033" SummaryCodepage="1252" Compressed="yes" InstallScope="perMachine" />
+    <Product Id="AA63692A-DF9E-4B3A-A998-0542F82E0270" Name="IIS StripHeaders module" Language="1033" Version="1.0.1.0" Manufacturer="Dionach Ltd" UpgradeCode="FDFC59AA-E51F-4394-B9AA-5DA92C84A2ED">
+        <Package Id="44ADBB5A-C001-40E1-9272-6594E73517B9" Description="IIS StripHeaders module installer" InstallerVersion="200" Languages="1033" SummaryCodepage="1252" Compressed="yes" InstallScope="perMachine" />
+        <Property Id="PREVIOUSVERSIONSINSTALLED" Secure="yes" />
+        <Upgrade Id="FDFC59AA-E51F-4394-B9AA-5DA92C84A2ED">
+            <UpgradeVersion
+               Minimum="1.0.0.0" Maximum="99.0.0.0"
+               Property="PREVIOUSVERSIONSINSTALLED"
+               IncludeMinimum="yes" IncludeMaximum="no" />
+        </Upgrade>
         <!-- Prevent downgrades --> 
-        <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+        <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." Schedule="afterInstallInitialize" />
         <!-- Make sure installer is built as a single msi -->
         <MediaTemplate EmbedCab="yes" />
         <!-- Prevent restart manager or the files in use dialog being displayed on uninstall -->
