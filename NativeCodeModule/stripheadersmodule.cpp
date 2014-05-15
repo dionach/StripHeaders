@@ -61,7 +61,7 @@ private:
 	}
 
 public:
-	REQUEST_NOTIFICATION_STATUS OnEndRequest( IN IHttpContext * pHttpContext, IN IHttpEventProvider * pProvider )
+	REQUEST_NOTIFICATION_STATUS OnSendResponse( IN IHttpContext * pHttpContext, IN ISendResponseProvider * pProvider )
 	{
 			UNREFERENCED_PARAMETER( pProvider );
 
@@ -243,5 +243,5 @@ HRESULT __stdcall RegisterModule( DWORD dwServerVersion, IHttpModuleRegistration
 	UNREFERENCED_PARAMETER( pGlobalInfo );
 
 	// Set the request notifications and exit.
-	return pModuleInfo->SetRequestNotifications( new StripHeadersModuleFactory, RQ_END_REQUEST, 0 );
+	return pModuleInfo->SetRequestNotifications( new StripHeadersModuleFactory, RQ_SEND_RESPONSE, 0 );
 }
