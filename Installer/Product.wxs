@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi" xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
-    <Product Id="AA63692A-DF9E-4B3A-A998-0542F82E0270" Name="IIS StripHeaders module" Language="1033" Version="1.0.1.0" Manufacturer="Dionach Ltd" UpgradeCode="FDFC59AA-E51F-4394-B9AA-5DA92C84A2ED">
-        <Package Id="44ADBB5A-C001-40E1-9272-6594E73517B9" Description="IIS StripHeaders module installer" InstallerVersion="200" Languages="1033" SummaryCodepage="1252" Compressed="yes" InstallScope="perMachine" />
+    <Product Id="3AC619A3-0FC4-43C6-A687-B54AD5E7BDDC" Name="IIS StripHeaders module" Language="1033" Version="1.0.2.0" Manufacturer="Dionach Ltd" UpgradeCode="FDFC59AA-E51F-4394-B9AA-5DA92C84A2ED">
+        <Package Id="877DF3E6-5C83-4187-BF99-EE7C2C6D5CB3" Description="IIS StripHeaders module installer" InstallerVersion="200" Languages="1033" SummaryCodepage="1252" Compressed="yes" InstallScope="perMachine" />
         <Property Id="PREVIOUSVERSIONSINSTALLED" Secure="yes" />
         <Upgrade Id="FDFC59AA-E51F-4394-B9AA-5DA92C84A2ED">
             <UpgradeVersion
@@ -50,12 +50,22 @@
                     </Directory>
                 </Directory>
             </Directory>
+            <Directory Id="SystemFolder">
+                <Directory Id="INETSRVDIR32" Name="inetsrv">
+                </Directory>
+            </Directory>
         </Directory>
         <!-- Add files and registry values -->
+        <DirectoryRef Id="INETSRVDIR32">
+            <!-- Add the stripheaders.dll module -->
+            <Component Id="stripheaders32.dll" Guid="0332F0DE-0BD5-4032-BF53-02ED3595AACA">
+                <File Source="..\Release\stripheaders.dll" KeyPath="yes" Checksum="yes" Id="dll32"/>
+            </Component>
+        </DirectoryRef>
         <DirectoryRef Id="INETSRVDIR">
             <!-- Add the stripheaders.dll module -->
             <Component Id="stripheaders.dll" Guid="4BBF0D80-2CE8-4EC3-BDDD-93786BE2258C">
-                <File Source="$(var.NativeCodeModule.TargetPath)" KeyPath="yes" Checksum="yes"/>
+                <File Source="..\x64\Release\stripheaders.dll" KeyPath="yes" Checksum="yes" Id="dll64"/>
             </Component>
             <!-- Add the registry key to disbale the Microsoft-HTTPAPI Server header -->
             <Component Id="HTTPAPIHeaderRegistryEntry" Guid="18C15683-E20E-4C6E-B4BC-2770F68D54DE">
@@ -97,6 +107,7 @@
         <!-- install the files and registry values defined above -->
         <Feature Id="MainInstall" Title="Main Install" Level="1">
             <ComponentRef Id="stripheaders.dll" />
+            <ComponentRef Id="stripheaders32.dll" />
             <ComponentRef Id="HTTPAPIHeaderRegistryEntry" />
             <ComponentRef Id="stripHeaders_schema.xml" />
             <ComponentRef Id="APPLICATIONHOSTXML" />
