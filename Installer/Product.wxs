@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi" xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
-    <Product Id="3AC619A3-0FC4-43C6-A687-B54AD5E7BDDC" Name="IIS StripHeaders module" Language="1033" Version="1.0.2.0" Manufacturer="Dionach Ltd" UpgradeCode="FDFC59AA-E51F-4394-B9AA-5DA92C84A2ED">
-        <Package Id="877DF3E6-5C83-4187-BF99-EE7C2C6D5CB3" Description="IIS StripHeaders module installer" InstallerVersion="200" Languages="1033" SummaryCodepage="1252" Compressed="yes" InstallScope="perMachine" />
+    <Product Id="A859B72D-E3D7-4EDA-A115-FFF8B79EE164" Name="IIS StripHeaders module" Language="1033" Version="1.0.3.0" Manufacturer="Dionach Ltd" UpgradeCode="FDFC59AA-E51F-4394-B9AA-5DA92C84A2ED">
+        <Package Id="292BF20A-5873-4868-B5A5-6CA658E73A15" Description="IIS StripHeaders module installer" InstallerVersion="200" Languages="1033" SummaryCodepage="1252" Compressed="yes" InstallScope="perMachine" />
         <Property Id="PREVIOUSVERSIONSINSTALLED" Secure="yes" />
         <Upgrade Id="FDFC59AA-E51F-4394-B9AA-5DA92C84A2ED">
             <UpgradeVersion
