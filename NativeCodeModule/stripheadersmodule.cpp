@@ -1,233 +1,73 @@
 #define _WINSOCKAPI_
 #include <httpserv.h>
 #include <comdef.h>
+#include <string>
+#include <vector>
+
+std::vector <std::string> vHeaders;
 
 class StripHeadersModule : public CHttpModule
 {
-private:
-		IAppHostAdminManager        * pMgr;
-		IAppHostElement             * pParentElem;
-		IAppHostElementCollection   * pElemColl;
-		IAppHostElement             * pElem;
-		IAppHostPropertyCollection  * pElemProps;
-		IAppHostProperty            * pElemProp;
-
-		HRESULT hr;
-		BSTR    bstrConfigCommitPath;
-		BSTR    bstrSectionName;
-		BSTR    bstrPropertyName;
-		DWORD   dwElementCount;
-		VARIANT vtValue;
-		VARIANT vtPropertyName;
-
-	void cleanup() 
-	{
-			if ( pElemProp != NULL )
-			{
-				pElemProp->Release();
-				pElemProp = NULL;
-			}
-			if ( pElemProps != NULL )
-			{
-				pElemProps->Release(); 
-				pElemProps = NULL;
-			}
-			if ( pElem != NULL )
-			{
-				pElem->Release();
-				pElem = NULL;
-			}
-			if ( pElemColl != NULL )
-			{
-				pElemColl->Release(); 
-				pElemColl = NULL;
-			}
-			if ( pParentElem != NULL )
-			{
-				pParentElem->Release(); 
-				pParentElem = NULL;
-			}
-			if ( pMgr != NULL )
-			{
-				pMgr->Release(); 
-				pMgr = NULL;
-			}
-
-			SysFreeString( bstrConfigCommitPath );
-			SysFreeString( bstrSectionName );
-			SysFreeString( bstrPropertyName );
-
-			CoUninitialize();
-	}
 
 public:
-	REQUEST_NOTIFICATION_STATUS OnSendResponse( IN IHttpContext * pHttpContext, IN ISendResponseProvider * pProvider )
+	REQUEST_NOTIFICATION_STATUS OnSendResponse(IN IHttpContext * pHttpContext, IN ISendResponseProvider * pProvider)
 	{
-			UNREFERENCED_PARAMETER( pProvider );
+		UNREFERENCED_PARAMETER(pProvider);
+		HRESULT hr = S_OK;
 
-			pMgr        = NULL;
-			pParentElem = NULL;
-			pElemColl   = NULL;
-			pElem       = NULL;
-			pElemProps  = NULL;
-			pElemProp   = NULL;
+		// Retrieve a pointer to the response.
+		IHttpResponse * pHttpResponse = pHttpContext->GetResponse();
 
-			hr                   = S_OK;
-			bstrConfigCommitPath = SysAllocString( L"MACHINE/WEBROOT/APPHOST" );
-			bstrSectionName      = SysAllocString( L"system.webServer/stripHeaders" );
-			bstrPropertyName     = SysAllocString( L"name" );
-			dwElementCount       = 0;
-			vtPropertyName.vt            = VT_BSTR;
-			vtPropertyName.bstrVal       = bstrPropertyName;
-
-			// Initialize
-			hr = CoInitializeEx( NULL, COINIT_MULTITHREADED );
-			if ( FAILED( hr ) )
+		// Test for an error.
+		if (pHttpResponse != NULL)
+		{
+			for (int i = 0; i != vHeaders.size(); i++)
 			{
-				// Set the error status.
-				pProvider->SetErrorStatus( hr );
-				// cleanup
-				cleanup();
-				// End additional processing.
-				return RQ_NOTIFICATION_FINISH_REQUEST;
-			}
-
-			// Create
-			hr = CoCreateInstance( __uuidof( AppHostAdminManager ), NULL, 
-					CLSCTX_INPROC_SERVER,
-					__uuidof( IAppHostAdminManager ), (void**) &pMgr );
-			if( FAILED( hr ) )
-			{
-				pProvider->SetErrorStatus( hr );
-				cleanup();
-				return RQ_NOTIFICATION_FINISH_REQUEST;
-			}
-
-			// Get the admin section
-			hr = pMgr->GetAdminSection( bstrSectionName, bstrConfigCommitPath, &pParentElem );
-			if ( FAILED( hr ) || ( &pParentElem == NULL ) )
-			{
-				pProvider->SetErrorStatus( hr );
-				cleanup();
-				return RQ_NOTIFICATION_FINISH_REQUEST;
-			}
-
-
-			// Get the site collection
-			hr = pParentElem->get_Collection( &pElemColl );
-			if ( FAILED ( hr ) || ( &pElemColl == NULL ) )
-			{
-				pProvider->SetErrorStatus( hr );
-				cleanup();
-				return RQ_NOTIFICATION_FINISH_REQUEST;
-			}
-
-			// Get the elements
-			hr = pElemColl->get_Count( &dwElementCount );
-			for ( USHORT i = 0; i < dwElementCount; i++ )
-			{
-				VARIANT vtItemIndex;
-				vtItemIndex.vt = VT_I2;
-				vtItemIndex.iVal = i;
-
-				// Add a new section group
-				hr = pElemColl->get_Item( vtItemIndex, &pElem );
-				if ( FAILED( hr ) || ( &pElem == NULL ) )
-				{
-					pProvider->SetErrorStatus( hr );
-					cleanup();
-					return RQ_NOTIFICATION_FINISH_REQUEST;
-				}
-
-				// Get the child elements
-				hr = pElem->get_Properties( &pElemProps );
-				if ( FAILED( hr ) || ( &pElemProps == NULL ) )
-				{
-					pProvider->SetErrorStatus( hr );
-					cleanup();
-					return RQ_NOTIFICATION_FINISH_REQUEST;
-				}
-
-				hr = pElemProps->get_Item( vtPropertyName, &pElemProp );
-				if ( FAILED( hr ) || ( pElemProp == NULL ) )
-				{
-					pProvider->SetErrorStatus( hr );
-					cleanup();
-					return RQ_NOTIFICATION_FINISH_REQUEST;
-				}
-
-				hr = pElemProp->get_Value( &vtValue );
-				if ( FAILED( hr ) )
-				{
-					pProvider->SetErrorStatus( hr );
-					cleanup();
-					return RQ_NOTIFICATION_FINISH_REQUEST;
-				}
-
-				// Retrieve a pointer to the response.
-				IHttpResponse * pHttpResponse = pHttpContext->GetResponse();
+				// delete header
+				hr = pHttpResponse->DeleteHeader(vHeaders[i].c_str());
 
 				// Test for an error.
-				if ( pHttpResponse != NULL )
+				if (FAILED(hr))
 				{
-					// convert bstr to string in order to delete header
-					_bstr_t header( vtValue.bstrVal );
-
-					// delete header
-					hr = pHttpResponse->DeleteHeader( (char *)header );
-
-					// Test for an error.
-					if ( FAILED( hr ) )
-					{
-						// Set the error status.
-						pProvider->SetErrorStatus( hr );
-						// cleanup
-						cleanup();
-						// End additional processing.
-						return RQ_NOTIFICATION_FINISH_REQUEST;
-					}
-				}
-
-				// loop_cleanup
-				if ( pElem != NULL )
-				{
-					pElem->Release(); 
-					pElem = NULL;
+					// Set the error status.
+					pProvider->SetErrorStatus(hr);
+					// End additional processing.
+					return RQ_NOTIFICATION_FINISH_REQUEST;
 				}
 			}
-
-			cleanup();
-			// Return processing to the pipeline.
-			return RQ_NOTIFICATION_CONTINUE;
 		}
+
+		// Return processing to the pipeline.
+		return RQ_NOTIFICATION_CONTINUE;
+	}
 };
 
 // Create the module's class factory.
 class StripHeadersModuleFactory : public IHttpModuleFactory
 {
 public:
-	HRESULT GetHttpModule( OUT CHttpModule ** ppModule, IN IModuleAllocator * pAllocator )
+	HRESULT GetHttpModule(OUT CHttpModule ** ppModule, IN IModuleAllocator * pAllocator)
 	{
-			UNREFERENCED_PARAMETER( pAllocator );
+		UNREFERENCED_PARAMETER(pAllocator);
 
-			// Create a new instance.
-			StripHeadersModule * pModule = new StripHeadersModule;
+		// Create a new instance.
+		StripHeadersModule * pModule = new StripHeadersModule;
 
-			// Test for an error.
-			if ( !pModule )
-			{
-				// Return an error if the factory cannot create the instance.
-				return HRESULT_FROM_WIN32( ERROR_NOT_ENOUGH_MEMORY );
-			}
-			else
-			{
-				// Return a pointer to the module.
-				*ppModule = pModule;
-				pModule = NULL;
-				// Return a success status.
-				return S_OK;
-			}
+		// Test for an error.
+		if (!pModule)
+		{
+			// Return an error if the factory cannot create the instance.
+			return HRESULT_FROM_WIN32(ERROR_NOT_ENOUGH_MEMORY);
 		}
+		else
+		{
+			// Return a pointer to the module.
+			*ppModule = pModule;
+			pModule = NULL;
+			// Return a success status.
+			return S_OK;
+		}
+	}
 
 	void Terminate()
 	{
@@ -237,27 +77,137 @@ public:
 };
 
 // Create the module's exported registration function.
-HRESULT __stdcall RegisterModule( DWORD dwServerVersion, IHttpModuleRegistrationInfo * pModuleInfo, IHttpServer * pGlobalInfo )
+HRESULT __stdcall RegisterModule(DWORD dwServerVersion, IHttpModuleRegistrationInfo * pModuleInfo, IHttpServer * pGlobalInfo)
 {
-	UNREFERENCED_PARAMETER( dwServerVersion );
-	UNREFERENCED_PARAMETER( pGlobalInfo );
+	UNREFERENCED_PARAMETER(dwServerVersion);
+	IAppHostAdminManager        * pMgr = NULL;
+	IAppHostElement             * pStripHeadersElement = NULL;
+	IAppHostElementCollection   * pHeaderElements = NULL;
+	DWORD						  dwHeaderElementsCount = 0;
+	IAppHostElement             * pHeaderElement = NULL;
+	IAppHostPropertyCollection  * pHeaderElementProperties = NULL;
+	IAppHostProperty            * pHeaderElementNameProperty = NULL;
+	VARIANT vtHeaderNameValue;
+	VARIANT vtHeaderNameProperty;
+	vtHeaderNameProperty.vt = VT_BSTR;
+	vtHeaderNameProperty.bstrVal = L"name";
 
-	HRESULT hr;
+	HRESULT hr = S_OK;
+
+	// Get the configuration object
+	pMgr = pGlobalInfo->GetAdminManager();
+	if (pMgr == NULL)
+	{
+		return hr;
+	}
+
+	// Get the strip headers section of the configuration
+	hr = pMgr->GetAdminSection(L"system.webServer/stripHeaders", L"MACHINE/WEBROOT/APPHOST", &pStripHeadersElement);
+	if (FAILED(hr) || (&pStripHeadersElement == NULL))
+	{
+		return hr;
+	}
+
+	// Get the strip headers element collection
+	hr = pStripHeadersElement->get_Collection(&pHeaderElements);
+	if (FAILED(hr))
+	{
+		return hr;
+	}
+
+	// Get the count of elements
+	hr = pHeaderElements->get_Count(&dwHeaderElementsCount);
+	if (FAILED(hr) || (&dwHeaderElementsCount == NULL))
+	{
+		return hr;
+	}
+
+	// Loop over header elements
+	for (DWORD i = 0; i < dwHeaderElementsCount; i++)
+	{
+		VARIANT vtLoopIndex;
+		vtLoopIndex.vt = VT_I2;
+		vtLoopIndex.iVal = i;
+
+		// Get the current header element
+		hr = pHeaderElements->get_Item(vtLoopIndex, &pHeaderElement);
+		if (FAILED(hr) || (&pHeaderElement == NULL))
+		{
+			return hr;
+		}
+
+		// Get the child elements
+		hr = pHeaderElement->get_Properties(&pHeaderElementProperties);
+		if (FAILED(hr) || (&pHeaderElementProperties == NULL))
+		{
+			return hr;
+		}
+
+		hr = pHeaderElementProperties->get_Item(vtHeaderNameProperty, &pHeaderElementNameProperty);
+		if (FAILED(hr) || (pHeaderElementNameProperty == NULL))
+		{
+			return hr;
+		}
+
+		hr = pHeaderElementNameProperty->get_Value(&vtHeaderNameValue);
+		if (FAILED(hr))
+		{
+			return hr;
+		}
+
+		// Add header name to headers vector
+		_bstr_t bstrHeader(vtHeaderNameValue.bstrVal);
+		vHeaders.push_back((std::string)bstrHeader);
+
+		// loop_cleanup
+		if (pHeaderElementNameProperty != NULL)
+		{
+			pHeaderElementNameProperty->Release();
+			pHeaderElementNameProperty = NULL;
+		}
+		if (pHeaderElementProperties != NULL)
+		{
+			pHeaderElementProperties->Release();
+			pHeaderElementProperties = NULL;
+		}
+		if (pHeaderElement != NULL)
+		{
+			pHeaderElement->Release();
+			pHeaderElement = NULL;
+		}
+	}
+
+	// cleanup
+	if (pHeaderElements != NULL)
+	{
+		pHeaderElements->Release();
+		pHeaderElements = NULL;
+	}
+	if (pStripHeadersElement != NULL)
+	{
+		pStripHeadersElement->Release();
+		pStripHeadersElement = NULL;
+	}
+	if (pMgr != NULL)
+	{
+		pMgr->Release();
+		pMgr = NULL;
+	}
 
 	// Set the request notifications
-	hr = pModuleInfo->SetRequestNotifications( new StripHeadersModuleFactory, RQ_SEND_RESPONSE, 0 );
+	hr = pModuleInfo->SetRequestNotifications(new StripHeadersModuleFactory, RQ_SEND_RESPONSE, 0);
 	if (FAILED(hr))
-    {
-        return hr;
-    }
+	{
+		return hr;
+	}
 
 	// Set the request priority.
 	// Note: The priority levels are inverted for RQ_SEND_RESPONSE notifications.
-    hr = pModuleInfo->SetPriorityForRequestNotification( RQ_SEND_RESPONSE, PRIORITY_ALIAS_FIRST );
+	hr = pModuleInfo->SetPriorityForRequestNotification(RQ_SEND_RESPONSE, PRIORITY_ALIAS_FIRST);
 	if (FAILED(hr))
-    {
-        return hr;
-    }
+	{
+		return hr;
+	}
 
 	return S_OK;
 }
