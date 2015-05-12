@@ -8,7 +8,6 @@ std::vector <std::string> vHeaders;
 
 class StripHeadersModule : public CHttpModule
 {
-
 public:
 	REQUEST_NOTIFICATION_STATUS OnSendResponse(IN IHttpContext * pHttpContext, IN ISendResponseProvider * pProvider)
 	{
@@ -190,7 +189,6 @@ HRESULT __stdcall RegisterModule(DWORD dwServerVersion, IHttpModuleRegistrationI
 	}
 	if (pMgr != NULL)
 	{
-		pMgr->Release();
 		pMgr = NULL;
 	}
 
