@@ -10,7 +10,7 @@ http://www.dionach.com/blog/easily-remove-unwanted-http-headers-in-iis-70-to-85
 Installation
 ============
 
-Download the ```iis_stripheaders_1.0.1_x64.msi``` installer from the blog post and run the installer on your IIS servers. 
+Download the latest MSI installer from the release page (https://github.com/Dionach/StripHeaders/releases) and run the installer on your IIS servers. 
 
 Alternatively, use Group Policy to assign the installer package to all IIS servers within an organisation. See http://support.microsoft.com/kb/816102 for more information.
 
