@@ -26,7 +26,7 @@
     <!-- Ensure IIS is installed -->
     <Property Id="IISVERSION">
       <DirectorySearch Id="IISVersion" Path="[SystemFolder]\inetsrv">
-        <FileSearch Name="w3wp.exe" MinVersion="7.0" />
+        <FileSearch Name="w3wp.exe"/>
       </DirectorySearch>
     </Property>
     <Condition Message="This module is only supported on systems running IIS 7.0 or above.">
@@ -35,7 +35,7 @@
     <!-- Ensure appcmd is available to install and remove modules -->
     <Property Id="APPCMDVERSION">
       <DirectorySearch Id="APPCMDVersion" Path="[SystemFolder]\inetsrv">
-        <FileSearch Name="appcmd.exe" MinVersion="7.0" />
+        <FileSearch Name="appcmd.exe" />
       </DirectorySearch>
     </Property>
     <Condition Message="This module requires the IIS appcmd.exe command line tool in order to enable the module.">
