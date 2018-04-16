@@ -99,6 +99,8 @@
         <util:XmlConfig Id="AddXPoweredByHeaderName" File="[CONFIGDIR]\applicationHost.config" ElementId="AddXPoweredByHeaderElement" Name="name" Value="X-Powered-By" Sequence="1010" />
         <util:XmlConfig Id="AddXAspnetVersionHeaderElement" File="[CONFIGDIR]\applicationHost.config" Action="create" Node="element" ElementPath="/configuration/system.webServer/stripHeaders" Name="header" On="install" Sequence="1009" />
         <util:XmlConfig Id="AddXAspnetVersionHeaderName" File="[CONFIGDIR]\applicationHost.config" ElementId="AddXAspnetVersionHeaderElement" Name="name" Value="X-Aspnet-Version" Sequence="1010" />
+        <util:XmlConfig Id="AddXAspnetMvcVersionHeaderElement" File="[CONFIGDIR]\applicationHost.config" Action="create" Node="element" ElementPath="/configuration/system.webServer/stripHeaders" Name="header" On="install" Sequence="1009" />
+        <util:XmlConfig Id="AddXAspnetMvcVersionHeaderName" File="[CONFIGDIR]\applicationHost.config" ElementId="AddXAspnetMvcVersionHeaderElement" Name="name" Value="X-AspnetMvc-Version" Sequence="1010" />
         <!-- Remove custom schema and any configured headers on uninstall -->
         <util:XmlConfig Id="SchemaRemove" File="[CONFIGDIR]\applicationHost.config" Action="delete" Node="element" VerifyPath="section[\[]@name='stripHeaders'[\]]" ElementPath="configuration/configSections/sectionGroup[\[]@name='system.webServer'[\]]" On="uninstall" Sequence="1001" />
         <util:XmlConfig Id="ConfigurationRemove" File="[CONFIGDIR]\applicationHost.config" Action="delete" Node="element" VerifyPath="stripHeaders" ElementPath="/configuration/system.webServer" On="uninstall" Sequence="1002" />
