@@ -5,7 +5,7 @@ A Native-Code module for IIS 7.0 and above, designed to easily remove unnecessar
 
 For more information, and binary releases, please see the related blog post:
 
-http://www.dionach.com/blog/easily-remove-unwanted-http-headers-in-iis-70-to-85
+[http://www.dionach.com/blog/easily-remove-unwanted-http-headers-in-iis-70-to-85](https://www.dionach.com/blog/easily-remove-unwanted-http-headers-in-iis-7-0-to-8-5/)
 
 Installation
 ============
