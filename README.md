@@ -25,6 +25,7 @@ The StripHeaders module uses a very simple syntax to add additional headers to r
       <header name="Server" />
       <header name="X-Powered-By" />
       <header name="X-Aspnet-Version" />
+      <header name="X-AspnetMvc-Version" />
     </stripHeaders>
   </system.webServer>
 </configuration>
